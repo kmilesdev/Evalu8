@@ -15,6 +15,8 @@ import {
   MinusCircle,
   User,
   Bot,
+  Printer,
+  Download,
 } from "lucide-react";
 import {
   RadialBarChart,
@@ -187,6 +189,80 @@ function TranscriptSection({ messages }: { messages: Message[] }) {
   );
 }
 
+function generateReportText(
+  application: Application,
+  job: Job,
+  evaluation: Evaluation,
+  flags: Flag[],
+  msgs: Message[]
+): string {
+  const lines: string[] = [];
+  lines.push("EVALU8 - CANDIDATE EVALUATION REPORT");
+  lines.push("=".repeat(50));
+  lines.push("");
+  lines.push(`Candidate: ${application.candidateName}`);
+  lines.push(`Email: ${application.candidateEmail}`);
+  lines.push(`Position: ${job.title}`);
+  lines.push(`Simulation: ${job.simulationType.replace(/_/g, " ")}`);
+  lines.push(`Seniority: ${job.seniorityLevel}`);
+  lines.push("");
+  lines.push("-".repeat(50));
+  lines.push("SCORES");
+  lines.push("-".repeat(50));
+  lines.push(`Overall Score: ${Math.round(evaluation.overallScore)} / 100`);
+  lines.push(`Recommendation: ${evaluation.recommendation}`);
+  lines.push(`Decision Quality: ${Math.round(evaluation.decisionQuality)}`);
+  lines.push(`Communication Clarity: ${Math.round(evaluation.communicationClarity)}`);
+  lines.push(`Structured Process: ${Math.round(evaluation.structuredProcess)}`);
+  lines.push(`Risk Awareness: ${Math.round(evaluation.riskAwareness)}`);
+  lines.push(`Professional Judgment: ${Math.round(evaluation.professionalJudgment)}`);
+  lines.push("");
+  lines.push("-".repeat(50));
+  lines.push("SUMMARY");
+  lines.push("-".repeat(50));
+  lines.push(evaluation.summary);
+  lines.push("");
+  if (evaluation.strengths.length > 0) {
+    lines.push("STRENGTHS:");
+    evaluation.strengths.forEach((s) => lines.push(`  + ${s}`));
+    lines.push("");
+  }
+  if (evaluation.concerns.length > 0) {
+    lines.push("CONCERNS:");
+    evaluation.concerns.forEach((c) => lines.push(`  - ${c}`));
+    lines.push("");
+  }
+  if (flags.length > 0) {
+    lines.push("-".repeat(50));
+    lines.push("RED FLAGS");
+    lines.push("-".repeat(50));
+    flags.forEach((f) => {
+      lines.push(`[${f.severity.toUpperCase()}] ${f.category}: ${f.excerpt}`);
+    });
+    lines.push("");
+  }
+  if (application.location || application.yearsExperience || application.desiredComp) {
+    lines.push("-".repeat(50));
+    lines.push("CANDIDATE DETAILS");
+    lines.push("-".repeat(50));
+    if (application.location) lines.push(`Location: ${application.location}`);
+    if (application.workAuth) lines.push(`Work Authorization: ${application.workAuth}`);
+    if (application.yearsExperience) lines.push(`Experience: ${application.yearsExperience} years`);
+    if (application.desiredComp) lines.push(`Desired Compensation: ${application.desiredComp}`);
+    lines.push("");
+  }
+  lines.push("-".repeat(50));
+  lines.push("INTERVIEW TRANSCRIPT");
+  lines.push("-".repeat(50));
+  msgs.forEach((msg) => {
+    const speaker = msg.role === "assistant" ? "AI Interviewer" : "Candidate";
+    lines.push(`[${speaker}]`);
+    lines.push(msg.content);
+    lines.push("");
+  });
+  return lines.join("\n");
+}
+
 export default function CandidateReport() {
   const params = useParams<{ appId: string }>();
   const appId = params.appId;
@@ -232,12 +308,45 @@ export default function CandidateReport() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
-      <Link href={`/jobs/${job.id}`}>
-        <Button variant="ghost" size="sm" className="mb-3" data-testid="button-back-job">
-          <ArrowLeft className="w-4 h-4" />
-          Back to {job.title}
-        </Button>
-      </Link>
+      <div className="flex items-center justify-between gap-4 flex-wrap mb-3">
+        <Link href={`/jobs/${job.id}`}>
+          <Button variant="ghost" size="sm" data-testid="button-back-job">
+            <ArrowLeft className="w-4 h-4" />
+            Back to {job.title}
+          </Button>
+        </Link>
+        {evaluation && (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const text = generateReportText(application, job, evaluation, flags, messages);
+                const blob = new Blob([text], { type: "text/plain" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `${application.candidateName.replace(/\s/g, "_")}_report.txt`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+              data-testid="button-export-report"
+            >
+              <Download className="w-4 h-4" />
+              Export
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.print()}
+              data-testid="button-print-report"
+            >
+              <Printer className="w-4 h-4" />
+              Print
+            </Button>
+          </div>
+        )}
+      </div>
 
       <div className="flex items-start justify-between gap-4 flex-wrap mb-6">
         <div>

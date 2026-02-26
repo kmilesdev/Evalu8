@@ -87,6 +87,7 @@ export default function CreateJob() {
     },
     onSuccess: (job) => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
       setCreatedJob(job);
       toast({
         title: "Job created successfully",

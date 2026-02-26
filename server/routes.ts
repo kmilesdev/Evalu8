@@ -21,8 +21,9 @@ export async function registerRoutes(
   app.post("/api/jobs", requireAuth, async (req: Request, res: Response) => {
     try {
       const jobToken = randomBytes(12).toString("hex");
+      const { ownerId: _o, jobToken: _t, isActive: _a, id: _id, createdAt: _c, ...clientData } = req.body;
       const jobData = {
-        ...req.body,
+        ...clientData,
         ownerId: req.user!.id,
         jobToken,
       };
@@ -126,6 +127,41 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/stats", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userJobs = await storage.getJobsByOwner(req.user!.id);
+      let totalCandidates = 0;
+      let totalEvaluated = 0;
+      let scoreSum = 0;
+      let scoreCount = 0;
+
+      for (const job of userJobs) {
+        const apps = await storage.getApplicationsByJob(job.id);
+        totalCandidates += apps.length;
+        for (const app of apps) {
+          if (app.status === "evaluated") {
+            totalEvaluated++;
+            const ev = await storage.getEvaluationByApplication(app.id);
+            if (ev) {
+              scoreSum += ev.overallScore;
+              scoreCount++;
+            }
+          }
+        }
+      }
+
+      return res.json({
+        totalJobs: userJobs.length,
+        totalCandidates,
+        totalEvaluated,
+        avgScore: scoreCount > 0 ? Math.round(scoreSum / scoreCount) : null,
+      });
+    } catch (error) {
+      console.error("Get stats error:", error);
+      return res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
   app.get("/api/public/job/:jobToken", async (req: Request, res: Response) => {
     try {
       const job = await storage.getJobByToken(param(req.params.jobToken));
@@ -140,14 +176,13 @@ export async function registerRoutes(
 
   app.post("/api/public/applications", async (req: Request, res: Response) => {
     try {
-      const { jobToken, ...candidateData } = req.body;
+      const { jobToken, id: _id, status: _s, startedAt: _st, submittedAt: _su, ...candidateData } = req.body;
       const job = await storage.getJobByToken(jobToken);
       if (!job || !job.isActive) return res.status(404).json({ message: "Job not found or inactive" });
 
       const appData = {
         ...candidateData,
         jobId: job.id,
-        status: "in_progress",
       };
 
       const parsed = insertApplicationSchema.parse(appData);
@@ -213,6 +248,8 @@ export async function registerRoutes(
       return res.json({
         message: assistantMessage,
         stage: aiResponse.stage,
+        numQuestions: job.numQuestions,
+        timeLimitMinutes: job.timeLimitMinutes,
       });
     } catch (error) {
       console.error("Send message error:", error);

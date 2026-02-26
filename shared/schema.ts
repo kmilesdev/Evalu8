@@ -89,10 +89,12 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export const insertJobSchema = createInsertSchema(jobs).omit({
   id: true,
   createdAt: true,
+  isActive: true,
 });
 
 export const insertApplicationSchema = createInsertSchema(applications).omit({
   id: true,
+  status: true,
   startedAt: true,
   submittedAt: true,
 });

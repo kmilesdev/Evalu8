@@ -5,9 +5,24 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Briefcase, PlusCircle, Users, Clock, ChevronRight, AlertCircle } from "lucide-react";
+import {
+  Briefcase,
+  PlusCircle,
+  Users,
+  Clock,
+  ChevronRight,
+  AlertCircle,
+  BarChart3,
+  TrendingUp,
+  CheckCircle2,
+} from "lucide-react";
 
-type JobWithCounts = Job & { applicationCount?: number };
+type Stats = {
+  totalJobs: number;
+  totalCandidates: number;
+  totalEvaluated: number;
+  avgScore: number | null;
+};
 
 function formatDate(date: string | Date | null) {
   if (!date) return "N/A";
@@ -18,7 +33,36 @@ function formatDate(date: string | Date | null) {
   });
 }
 
-function JobCard({ job }: { job: JobWithCounts }) {
+function StatsBar({ stats }: { stats: Stats }) {
+  const items = [
+    { label: "Active Jobs", value: stats.totalJobs, icon: Briefcase, color: "text-primary" },
+    { label: "Total Candidates", value: stats.totalCandidates, icon: Users, color: "text-chart-2" },
+    { label: "Evaluated", value: stats.totalEvaluated, icon: CheckCircle2, color: "text-chart-3" },
+    { label: "Avg Score", value: stats.avgScore !== null ? `${stats.avgScore}/100` : "—", icon: TrendingUp, color: "text-chart-4" },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6" data-testid="stats-bar">
+      {items.map((item) => (
+        <Card key={item.label}>
+          <CardContent className="flex items-center gap-3 py-4">
+            <div className={`p-2 rounded-md bg-muted ${item.color}`}>
+              <item.icon className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">{item.label}</p>
+              <p className="text-lg font-bold tabular-nums" data-testid={`stat-${item.label.toLowerCase().replace(/\s/g, "-")}`}>
+                {item.value}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+function JobCard({ job }: { job: Job }) {
   return (
     <Link href={`/jobs/${job.id}`}>
       <Card className="hover-elevate active-elevate-2 cursor-pointer" data-testid={`card-job-${job.id}`}>
@@ -43,7 +87,7 @@ function JobCard({ job }: { job: JobWithCounts }) {
           <div className="flex items-center flex-wrap gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <Briefcase className="w-3.5 h-3.5" />
-              <span>{job.simulationType}</span>
+              <span>{job.simulationType.replace(/_/g, " ")}</span>
             </div>
             <div className="flex items-center gap-1">
               <Users className="w-3.5 h-3.5" />
@@ -52,6 +96,10 @@ function JobCard({ job }: { job: JobWithCounts }) {
             <div className="flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" />
               <span>{job.timeLimitMinutes}m</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <BarChart3 className="w-3.5 h-3.5" />
+              <span>{job.numQuestions} questions</span>
             </div>
           </div>
           <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t text-sm">
@@ -68,26 +116,41 @@ function JobCard({ job }: { job: JobWithCounts }) {
 
 function DashboardSkeleton() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-      {[1, 2, 3].map((i) => (
-        <Card key={i}>
-          <CardHeader className="space-y-2">
-            <Skeleton className="h-5 w-3/4" />
-            <Skeleton className="h-4 w-full" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-4 w-1/2" />
-            <Skeleton className="h-4 w-1/3 mt-4" />
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i}>
+            <CardContent className="py-4">
+              <Skeleton className="h-10 w-full" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {[1, 2, 3].map((i) => (
+          <Card key={i}>
+            <CardHeader className="space-y-2">
+              <Skeleton className="h-5 w-3/4" />
+              <Skeleton className="h-4 w-full" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-4 w-1/3 mt-4" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </>
   );
 }
 
 export default function Dashboard() {
   const { data: jobs, isLoading, error } = useQuery<Job[]>({
     queryKey: ["/api/jobs"],
+  });
+
+  const { data: stats } = useQuery<Stats>({
+    queryKey: ["/api/stats"],
   });
 
   return (
@@ -117,6 +180,8 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       )}
+
+      {!isLoading && !error && stats && <StatsBar stats={stats} />}
 
       {!isLoading && !error && jobs && jobs.length === 0 && (
         <Card data-testid="text-dashboard-empty">

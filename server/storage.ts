@@ -72,7 +72,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createApplication(app: InsertApplication): Promise<Application> {
-    const [created] = await db.insert(applications).values(app).returning();
+    const [created] = await db.insert(applications).values({ ...app, status: "in_progress" }).returning();
     return created;
   }
 

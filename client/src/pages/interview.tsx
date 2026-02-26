@@ -41,6 +41,8 @@ export default function InterviewPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  const [numQuestions, setNumQuestions] = useState(5);
+
   const { data: messagesData, isLoading: messagesLoading } = useQuery<Message[]>({
     queryKey: ["/api/public/applications", appId, "messages"],
     queryFn: async () => {
@@ -110,6 +112,8 @@ export default function InterviewPage() {
         },
       ]);
       if (data.stage) setStage(data.stage);
+      if (data.numQuestions) setNumQuestions(data.numQuestions);
+      if (data.timeLimitMinutes) setTimeLimitMs(data.timeLimitMinutes * 60 * 1000);
       setQuestionCount(1);
     } catch (err: any) {
       toast({
@@ -149,6 +153,7 @@ export default function InterviewPage() {
         },
       ]);
       if (data.stage) setStage(data.stage);
+      if (data.numQuestions) setNumQuestions(data.numQuestions);
       setQuestionCount((prev) => prev + 1);
     } catch (err: any) {
       toast({
@@ -252,10 +257,10 @@ export default function InterviewPage() {
               <div className="flex items-center justify-between gap-2 mb-1">
                 <span className="text-xs text-muted-foreground">Progress</span>
                 <span className="text-xs text-muted-foreground" data-testid="text-question-count">
-                  {questionCount} question{questionCount !== 1 ? "s" : ""} asked
+                  {questionCount} / {numQuestions} questions
                 </span>
               </div>
-              <Progress value={Math.min(questionCount * 20, 100)} className="h-1.5" />
+              <Progress value={Math.min((questionCount / numQuestions) * 100, 100)} className="h-1.5" />
             </div>
           )}
 
