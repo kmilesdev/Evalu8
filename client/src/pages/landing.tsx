@@ -50,7 +50,7 @@ export default function Landing() {
       </nav>
 
       <section className="relative overflow-visible">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/3 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-transparent to-chart-2/5 pointer-events-none" />
         <div className="max-w-4xl mx-auto px-6 py-24 text-center relative">
           <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm text-muted-foreground mb-6">
             <Zap className="w-3.5 h-3.5 text-primary" />
