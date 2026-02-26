@@ -11,3 +11,6 @@ attached_assets
 .local
 .env
 .DS_Store
+.replit
+replit.md
+script/
