@@ -36,6 +36,12 @@ Evalu8 is an AI-powered hiring simulation platform that evaluates candidate deci
 3. Complete AI interview at /interview/:appId (progress bar tied to numQuestions, countdown timer)
 4. See completion page at /interview-complete/:appId
 
+## Locked MVP Defaults (jobs table)
+- `simulation_type` = "problem_solving"
+- `seniority_level` = "mid"
+- `num_questions` = 8 (range: 3-12)
+- `time_limit_minutes` = 15 (range: 10-30)
+
 ## Database Tables
 - `users` - Recruiter accounts
 - `jobs` - Job simulations with jobToken for sharing

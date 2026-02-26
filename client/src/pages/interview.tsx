@@ -41,7 +41,7 @@ export default function InterviewPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const [numQuestions, setNumQuestions] = useState(5);
+  const [numQuestions, setNumQuestions] = useState(8);
 
   const { data: messagesData, isLoading: messagesLoading } = useQuery<Message[]>({
     queryKey: ["/api/public/applications", appId, "messages"],

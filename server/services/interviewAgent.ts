@@ -22,13 +22,17 @@ export async function runInterviewAgent(
   candidateMessage: string
 ): Promise<InterviewResponse> {
   const questionCount = conversationHistory.filter(m => m.role === "assistant").length;
-  const maxQuestions = job.numQuestions || 5;
+  const maxQuestions = job.numQuestions || 8;
+  const simulationType = job.simulationType || "problem_solving";
+  const seniorityLevel = job.seniorityLevel || "mid";
+  const timeLimitMinutes = job.timeLimitMinutes || 15;
 
   const systemPrompt = `You are an AI interviewer conducting a workplace simulation interview for the role: "${job.title}".
 
 Job Description: ${job.description}
-Simulation Type: ${job.simulationType}
-Seniority Level: ${job.seniorityLevel}
+Simulation Type: ${simulationType}
+Seniority Level: ${seniorityLevel}
+Time Limit: ${timeLimitMinutes} minutes
 Maximum Questions: ${maxQuestions}
 Questions Asked So Far: ${questionCount}
 

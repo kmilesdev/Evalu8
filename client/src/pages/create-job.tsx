@@ -34,13 +34,14 @@ const createJobSchema = z.object({
   description: z.string().min(1, "Description is required").max(5000),
   simulationType: z.string().min(1, "Simulation type is required"),
   seniorityLevel: z.string().min(1, "Seniority level is required"),
-  timeLimitMinutes: z.coerce.number().min(5).max(120),
-  numQuestions: z.coerce.number().min(1).max(20),
+  timeLimitMinutes: z.coerce.number().min(10, "Minimum 10 minutes").max(30, "Maximum 30 minutes"),
+  numQuestions: z.coerce.number().min(3, "Minimum 3 questions").max(12, "Maximum 12 questions"),
 });
 
 type CreateJobFormValues = z.infer<typeof createJobSchema>;
 
 const simulationTypes = [
+  { value: "problem_solving", label: "Problem Solving" },
   { value: "crisis_management", label: "Crisis Management" },
   { value: "client_negotiation", label: "Client Negotiation" },
   { value: "technical_decision", label: "Technical Decision Making" },
@@ -73,10 +74,10 @@ export default function CreateJob() {
     defaultValues: {
       title: "",
       description: "",
-      simulationType: "",
-      seniorityLevel: "",
-      timeLimitMinutes: 30,
-      numQuestions: 5,
+      simulationType: "problem_solving",
+      seniorityLevel: "mid",
+      timeLimitMinutes: 15,
+      numQuestions: 8,
     },
   });
 
@@ -270,7 +271,7 @@ export default function CreateJob() {
                     <FormItem>
                       <FormLabel>Time Limit (minutes)</FormLabel>
                       <FormControl>
-                        <Input type="number" min={5} max={120} {...field} data-testid="input-time-limit" />
+                        <Input type="number" min={10} max={30} {...field} data-testid="input-time-limit" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -284,7 +285,7 @@ export default function CreateJob() {
                     <FormItem>
                       <FormLabel>Number of Questions</FormLabel>
                       <FormControl>
-                        <Input type="number" min={1} max={20} {...field} data-testid="input-num-questions" />
+                        <Input type="number" min={3} max={12} {...field} data-testid="input-num-questions" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

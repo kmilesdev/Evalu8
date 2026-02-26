@@ -32,8 +32,23 @@ export async function registerRoutes(
     try {
       const jobToken = randomBytes(12).toString("hex");
       const { ownerId: _o, jobToken: _t, isActive: _a, id: _id, createdAt: _c, ...clientData } = req.body;
+
+      const numQuestions = clientData.numQuestions ?? 8;
+      const timeLimitMinutes = clientData.timeLimitMinutes ?? 15;
+
+      if (numQuestions < 3 || numQuestions > 12) {
+        return res.status(400).json({ message: "num_questions must be between 3 and 12" });
+      }
+      if (timeLimitMinutes < 10 || timeLimitMinutes > 30) {
+        return res.status(400).json({ message: "time_limit_minutes must be between 10 and 30" });
+      }
+
       const jobData = {
         ...clientData,
+        simulationType: clientData.simulationType || "problem_solving",
+        seniorityLevel: clientData.seniorityLevel || "mid",
+        numQuestions,
+        timeLimitMinutes,
         ownerId: req.user!.id,
         jobToken,
       };
