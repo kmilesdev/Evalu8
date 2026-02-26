@@ -6,6 +6,7 @@ import { setupAuth, requireAuth } from "./auth";
 import { insertJobSchema, insertApplicationSchema } from "@shared/schema";
 import { runInterviewAgent } from "./services/interviewAgent";
 import { runEvaluationAgent } from "./services/evaluationAgent";
+import { pool } from "./db";
 
 function param(val: string | string[] | undefined): string {
   if (Array.isArray(val)) return val[0] || "";
@@ -17,6 +18,15 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   setupAuth(app);
+
+  app.get("/api/health", async (_req: Request, res: Response) => {
+    try {
+      await pool.query("SELECT 1");
+      return res.json({ ok: true, db: "connected" });
+    } catch (error) {
+      return res.status(503).json({ ok: false, db: "disconnected" });
+    }
+  });
 
   app.post("/api/jobs", requireAuth, async (req: Request, res: Response) => {
     try {
